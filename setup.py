@@ -16,5 +16,6 @@ setup(
             'show-data-prices = tubifer.display:show_data_prices',
         }
     },
+    test_suite='tests',
     zip_safe=True,
 )

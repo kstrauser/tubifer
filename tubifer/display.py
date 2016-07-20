@@ -1,11 +1,11 @@
 """Calculate and display ISP data plan prices"""
 
-import json
 import re
 
-import pkg_resources
-
 import click
+
+from . import provider as pppp
+
 
 DIGITS = re.compile(r'([0-9]+)')
 
@@ -71,12 +71,17 @@ def show_providers(parent, providers, provider_name=None, **kwargs):
         show_provider(indent, providers[name], **kwargs)
 
 
-def show_provider(parent, provider, type_name=None, **kwargs):
+def show_provider(parent, provider, state=None, city=None, type_name=None, **kwargs):
     """Show a provider and one or more of its plan types"""
 
     indent = Indenter(parent)
 
-    names = natural_sorted(provider['types'])
+    types = pppp.get_geo_types(provider, state, city)
+    if types is None:
+        indent('Unavailable in this location')
+        return
+
+    names = natural_sorted(types)
     if type_name is not None:
         if type_name not in names:
             indent('Type name {!r} must be one of {}'.format(type_name, names))
@@ -86,7 +91,7 @@ def show_provider(parent, provider, type_name=None, **kwargs):
     for name in names:
         print()
         indent('Type: {}'.format(name))
-        show_type(parent, provider['types'][name], **kwargs)
+        show_type(parent, types[name], **kwargs)
 
 
 def show_type(parent, type, plan_name=None, **kwargs):
@@ -157,8 +162,10 @@ def show_option(parent, option, max_mbps=None, usage_gb=None):
 @click.argument('type_name', required=False)
 @click.argument('plan_name', required=False)
 @click.argument('option_name', required=False)
+@click.option('--state', help='State to show plans for')
+@click.option('--city', help='City to show prices for')
 @click.option('--usage-gb', help='Expected data usage in GB', type=int)
-def show_data_prices(provider_name, type_name, plan_name, option_name, usage_gb):
+def show_data_prices(provider_name, type_name, plan_name, option_name, state, city, usage_gb):
     """Show ISP data plan prices on one or provider options.
 
     By default, show-data-prices displays all defined options for all
@@ -173,8 +180,10 @@ def show_data_prices(provider_name, type_name, plan_name, option_name, usage_gb)
 
     """
 
-    provider_data = pkg_resources.resource_string(__name__, 'data/providers.json')
-    dataset = json.loads(provider_data.decode('utf-8'))
+
+    dataset = {'Verizon': pppp.load('verizon')}
+    # provider_data = pkg_resources.resource_string(__name__, 'data/providers.json')
+    # dataset = json.loads(provider_data.decode('utf-8'))
 
     show_providers(None, dataset, provider_name=provider_name, type_name=type_name,
-                   plan_name=plan_name, option_name=option_name, usage_gb=usage_gb)
+                   plan_name=plan_name, option_name=option_name, state=state, city=city, usage_gb=usage_gb)

@@ -1,0 +1,65 @@
+{
+    "name": "Joe's Cable",
+    "url": "<joe's cable home page>",
+    "country": "US",
+    "state": {
+        "ZZ": null,
+        "CA": {
+            "types": {},
+            "city": {
+                "Deadzone": null,
+                "Futura": {
+                    "types": {
+                        "wired": {
+                            "plans": {
+                                "Family Plan": {
+                                    "options": {
+                                        "good": null,
+                                        "better": {
+                                            "price": 40
+                                        },
+                                        "best": {
+                                            "capGb": null
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "types": {
+        "wired": {
+            "sources": {
+                "google": "https://google.com"
+            },
+            "plans": {
+                "Family Plan": {
+                    "description": "<something>",
+                    "options": {
+                        "_defaults": {
+                            "capGb": 300
+                        },
+                        "good": {
+                            "price": 50,
+                            "overagePerGb": 5,
+                            "maxMbps": 20
+                        },
+                        "better": {
+                            "price": 60,
+                            "overagePerGb": 5,
+                            "maxMbps": 50
+                        },
+                        "best": {
+                            "price": 70,
+                            "overagePerGb": 5,
+                            "maxMbps": 100
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

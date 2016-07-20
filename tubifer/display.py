@@ -1,6 +1,9 @@
+"""Calculate and display ISP data plan prices"""
+
 import json
-import pkg_resources
 import re
+
+import pkg_resources
 
 import click
 
@@ -8,19 +11,35 @@ DIGITS = re.compile(r'([0-9]+)')
 
 
 def lower_str_or_int(value):
+    """Return the value as an int if possible, otherwise as a string"""
     return int(value) if value.isdigit() else value.lower()
 
 
 def natural_sort_key(value):
+    """Convet a value into a tuple suitable for natural ordering"""
     # http://stackoverflow.com/questions/11150239/python-natural-sorting
     return [lower_str_or_int(c) for c in DIGITS.split(value)]
 
 
 def natural_sorted(*args, **kwargs):
+    """Like sorted, but naturally ordered"""
     return sorted(*args, key=natural_sort_key, **kwargs)
 
 
-class Indenter:
+class Indenter:  # pylint: disable=too-few-public-methods
+    """Indented printer.
+
+    By default, prints unindented. If initialized with another
+    Indented instance, prints one level more indented than its parent.
+
+    >>> i = Indenter()
+    >>> i('foo')
+    foo
+    >>> j = Indenter(i)
+    >>> j('bar')
+      bar
+    """
+
     def __init__(self, parent=None):
         if parent is None:
             self.level = 0
@@ -100,6 +119,9 @@ def show_plan(parent, plan, option_name=None, **kwargs):
 
     indent = Indenter(parent)
 
+    print()
+    indent('Description: {}'.format(plan['description']))
+
     names = natural_sorted(plan['options'])
     if option_name is not None:
         if option_name not in names:
@@ -113,16 +135,16 @@ def show_plan(parent, plan, option_name=None, **kwargs):
         show_option(indent, plan['options'][name], **kwargs)
 
 
-def show_option(parent, option, max_mbps=None, gb=None):
+def show_option(parent, option, max_mbps=None, usage_gb=None):
     """Show an option and its price / time calculations"""
 
     indent = Indenter(parent)
 
     price = option['price']
     indent('Base price: ${}/month'.format(price))
-    if gb is not None:
-        if gb > option['capgb']:
-            price += option['overagePerGb'] * (gb - option['capgb'])
+    if usage_gb is not None:
+        if option['capgb'] is not None and usage_gb > option['capgb']:
+            price += option['overagePerGb'] * (usage_gb - option['capgb'])
         indent('Extended price: ${}/month'.format(price))
 
     if max_mbps is not None and option['capgb'] is not None:
@@ -131,15 +153,28 @@ def show_option(parent, option, max_mbps=None, gb=None):
 
 
 @click.command()
-@click.argument('provider', required=False)
-@click.argument('type', required=False)
-@click.argument('plan', required=False)
+@click.argument('provider_name', required=False)
+@click.argument('type_name', required=False)
+@click.argument('plan_name', required=False)
 @click.argument('option_name', required=False)
-@click.option('--gb', help='Expected data usage in GB', type=int)
-def show_data_prices(provider, type, plan, option_name, gb):
+@click.option('--usage-gb', help='Expected data usage in GB', type=int)
+def show_data_prices(provider_name, type_name, plan_name, option_name, usage_gb):
+    """Show ISP data plan prices on one or provider options.
+
+    By default, show-data-prices displays all defined options for all
+    providers. Results may be increasingly narrowed by giving
+    provider, type, plan, and option names.
+
+    If --usage-gb is given, plan options will display the calculated
+    price for using that amount of data in a month.
+
+    "Usage hours" are the number of hours each month you can use a
+    plan option at full speed without exceeding its data cap.
+
+    """
 
     provider_data = pkg_resources.resource_string(__name__, 'data/providers.json')
     dataset = json.loads(provider_data.decode('utf-8'))
 
-    show_providers(None, dataset, provider_name=provider, type_name=type, plan_name=plan,
-                   option_name=option_name, gb=gb)
+    show_providers(None, dataset, provider_name=provider_name, type_name=type_name,
+                   plan_name=plan_name, option_name=option_name, usage_gb=usage_gb)

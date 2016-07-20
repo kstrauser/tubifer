@@ -2,15 +2,16 @@
 
 ISP data plans are difficult to compare. Tubifer intends to fix that. Its main components are:
 
-* `tubifer/data/providers.json`: a formatted description of ISPs and their available data plans
-* A command, `show-data-prices`, for parsing and displaying its contents.
+* `tubifer/data/*.json`: formatted descriptions of ISPs and their available data plans
+* A command, `show-data-prices`, for parsing and displaying the ISP descriptions
 
 # Example
 
-The `show-data-prices` command loads the data in `tubifer/data/providers.json` and renders it in a readable format. By default, it displays information about all defined providers and all of their plans:
+The `show-data-prices` command loads the data in `tubifer/data/*.json` and renders it in a readable format. By default, it displays information about all defined providers and all of their plans:
 
 ```text
 $ show-data-prices --help
+
 Usage: show-data-prices [OPTIONS] [PROVIDER_NAME] [TYPE_NAME] [PLAN_NAME]
                         [OPTION_NAME]
 
@@ -27,6 +28,8 @@ Usage: show-data-prices [OPTIONS] [PROVIDER_NAME] [TYPE_NAME] [PLAN_NAME]
   at full speed without exceeding its data cap.
 
 Options:
+  --state TEXT        State to show plans for
+  --city TEXT         City to show prices for
   --usage-gb INTEGER  Expected data usage in GB
   --help              Show this message and exit.
 
@@ -35,22 +38,23 @@ $  show-data-prices
 Provider: Verizon
 
   Type: LTE
+    Sources:
+      Speed: https://business.verizonwireless.com/content/b2b/en/4glte/4gltefaqs.html
 
-  Max Mbps: 12
-  Sources:
-    Speed: https://business.verizonwireless.com/content/b2b/en/4glte/4gltefaqs.html
+    Plan: Verizon Plan
+      Description: https://www.verizonwireless.com/landingpages/verizon-plan/
 
-  Plan: Verizon Plan
+      Option: 2GB
+        Base price: $35/month
+        Cap GB: 2
+        Max Mbps: 12
+        Usage hours: 0.4
 
-    Description: https://www.verizonwireless.com/landingpages/verizon-plan/
-
-    Option: 2gb
-      Base price: $35/month
-      Usage hours: 0.4
-
-    Option: 4gb
-      Base price: $50/month
-      Usage hours: 0.8
+      Option: 4GB
+        Base price: $50/month
+        Cap GB: 4
+        Max Mbps: 12
+        Usage hours: 0.8
 
     [...]
 ```
@@ -58,49 +62,53 @@ Provider: Verizon
 You can successively narrow the results down by provider name, type name, plan name, and option name:
 
 ```text
-% show-data-prices Verizon LTE "Verizon Plan" 8gb
+$ show-data-prices Verizon LTE "Verizon Plan" 8GB
 
 Provider: Verizon
 
   Type: LTE
+    Sources:
+      Speed: https://business.verizonwireless.com/content/b2b/en/4glte/4gltefaqs.html
 
-  Max Mbps: 12
-  Sources:
-    Speed: https://business.verizonwireless.com/content/b2b/en/4glte/4gltefaqs.html
+    Plan: Verizon Plan
+      Description: https://www.verizonwireless.com/landingpages/verizon-plan/
 
-  Plan: Verizon Plan
-
-    Description: https://www.verizonwireless.com/landingpages/verizon-plan/
-
-    Option: 8gb
-      Base price: $70/month
-      Usage hours: 1.6
+      Option: 8GB
+        Base price: $70/month
+        Cap GB: 8
+        Max Mbps: 12
+        Usage hours: 1.6
 ```
 
 You can use the `--usage-gb` option to calculate how much each data plan can be expected to cost if you were to use that many GB of data in a month:
 
 ```text
+$ show-data-prices Verizon LTE "Verizon Plan" 8GB --usage-gb 10
+
 Provider: Verizon
 
   Type: LTE
+    Sources:
+      Speed: https://business.verizonwireless.com/content/b2b/en/4glte/4gltefaqs.html
 
-  Max Mbps: 12
-  Sources:
-    Speed: https://business.verizonwireless.com/content/b2b/en/4glte/4gltefaqs.html
+    Plan: Verizon Plan
+      Description: https://www.verizonwireless.com/landingpages/verizon-plan/
 
-  Plan: Verizon Plan
-
-    Description: https://www.verizonwireless.com/landingpages/verizon-plan/
-
-    Option: 8gb
-      Base price: $70/month
-      Extended price: $100/month
-      Usage hours: 1.6
+      Option: 8GB
+        Base price: $70/month
+        Extended price: $100/month
+        Cap GB: 8
+        Max Mbps: 12
+        Usage hours: 1.6
 ```
 
 # About Usage Hours
 
 Many ISPs apply data caps to their plans. If a plan's option includes such a cap, its display will include a "usage hours" component whose value is the number of hours you could use that option at its highest advertised speed without exceeding its cap.
+
+# Disclaimer
+
+While we intend to keep this information as up-to-date as possible, ISP data contracts change constantly. Cell phone providers add and drop plans, cable companies selectively enforce data caps, etc. This information should be used only to get a high-level idea of the options available to you. Verify all information with your ISP before relying on it: if their numbers disagree with ours, theirs will be the ones that matter.
 
 # Contributing
 

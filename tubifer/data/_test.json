@@ -5,27 +5,24 @@
     "state": {
         "ZZ": null,
         "CA": {
-            "types": {},
             "city": {
                 "Deadzone": null,
                 "Futura": {
-                    "types": {
-                        "wired": {
-                            "plans": {
-                                "Family Plan": {
-                                    "options": {
-                                        "good": null,
-                                        "better": {
-                                            "price": 40
-                                        },
-                                        "best": {
-                                            "capGb": null
-                                        }
+                    "wired": {
+                        "plans": {
+                            "Family Plan": {
+                                "options": {
+                                    "good": null,
+                                    "better": {
+                                        "price": 40
+                                    },
+                                    "best": {
+                                        "capGb": null
                                     }
                                 }
                             }
                         }
-                    }
+                        }
                 }
             }
         }

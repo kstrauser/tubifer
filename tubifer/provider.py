@@ -75,7 +75,7 @@ def get_geo_types(dataset, state=None, city=None):
         LOG.debug('%s is not available in %s', dataset['name'], state)
         return None
 
-    inherit = overlay(inherit, state_data['types'])
+    inherit = overlay(inherit, state_data)
 
     if city is None:
         return inherit
@@ -91,5 +91,5 @@ def get_geo_types(dataset, state=None, city=None):
         LOG.debug('%s is not available in %s, %s', dataset['name'], city, state)
         return None
 
-    inherit = overlay(inherit, city_data['types'])
+    inherit = overlay(inherit, city_data)
     return inherit

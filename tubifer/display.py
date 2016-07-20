@@ -76,7 +76,7 @@ def show_provider(parent, provider, type_name=None, **kwargs):
 
     indent = Indenter(parent)
 
-    names = natural_sorted(provider)
+    names = natural_sorted(provider['types'])
     if type_name is not None:
         if type_name not in names:
             indent('Type name {!r} must be one of {}'.format(type_name, names))
@@ -86,7 +86,7 @@ def show_provider(parent, provider, type_name=None, **kwargs):
     for name in names:
         print()
         indent('Type: {}'.format(name))
-        show_type(parent, provider[name], **kwargs)
+        show_type(parent, provider['types'][name], **kwargs)
 
 
 def show_type(parent, type, plan_name=None, **kwargs):

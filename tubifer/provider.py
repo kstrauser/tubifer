@@ -18,7 +18,7 @@ def providers():
 def load(name):
     """Load the named provider's JSON file from the package and return it."""
 
-    provider_data = pkg_resources.resource_string(__name__, 'data/{}.json'.format(name))
+    provider_data = pkg_resources.resource_string(__name__, 'data/{}'.format(name))
     return json.loads(provider_data.decode('utf-8'))
 
 
@@ -57,6 +57,8 @@ def overlay(under, over):
 
 
 def get_geo_types(dataset, state=None, city=None):
+    """Get the state and city's plan type information from a dataset."""
+
     inherit = dataset['types']
 
     if state is None:

@@ -8,7 +8,7 @@ from tubifer import provider
 
 class ProviderTests(unittest.TestCase):
     def setUp(self):
-        self.dataset = provider.load('_test')
+        self.dataset = provider.load('_test.json')
 
     def test_simple_traversal(self):
         types = provider.get_geo_types(self.dataset)

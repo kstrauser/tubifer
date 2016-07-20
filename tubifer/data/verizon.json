@@ -7,65 +7,57 @@
             "sources": {
                 "Speed": "https://business.verizonwireless.com/content/b2b/en/4glte/4gltefaqs.html"
             },
-            "maxMbps": 12,
             "plans": {
                 "Verizon Plan": {
                     "description": "https://www.verizonwireless.com/landingpages/verizon-plan/",
                     "options": {
-                        "2gb": {
-                            "capgb": 2,
-                            "price": 35,
-                            "overagePerGb": 15
+                        "_defaults": {
+                            "maxMbps": 12,
+                            "overagePerGB": 15
                         },
-                        "4gb": {
-                            "capgb": 4,
-                            "price": 50,
-                            "overagePerGb": 15
+                        "2GB": {
+                            "capGB": 2,
+                            "price": 35
                         },
-                        "8gb": {
-                            "capgb": 8,
-                            "price": 70,
-                            "overagePerGb": 15
+                        "4GB": {
+                            "capGB": 4,
+                            "price": 50
                         },
-                        "16gb": {
-                            "capgb": 16,
-                            "price": 90,
-                            "overagePerGb": 15
+                        "8GB": {
+                            "capGB": 8,
+                            "price": 70
                         },
-                        "24gb": {
-                            "capgb": 24,
-                            "price": 110,
-                            "overagePerGb": 15
+                        "16GB": {
+                            "capGB": 16,
+                            "price": 90
                         },
-                        "30gb": {
-                            "capgb": 30,
-                            "price": 135,
-                            "overagePerGb": 15
+                        "24GB": {
+                            "capGB": 24,
+                            "price": 110
                         },
-                        "40gb": {
-                            "capgb": 40,
-                            "price": 180,
-                            "overagePerGb": 15
+                        "30GB": {
+                            "capGB": 30,
+                            "price": 135
                         },
-                        "50gb": {
-                            "capgb": 50,
-                            "price": 225,
-                            "overagePerGb": 15
+                        "40GB": {
+                            "capGB": 40,
+                            "price": 180
                         },
-                        "60gb": {
-                            "capgb": 60,
-                            "price": 270,
-                            "overagePerGb": 15
+                        "50GB": {
+                            "capGB": 50,
+                            "price": 225
                         },
-                        "80gb": {
-                            "capgb": 80,
-                            "price": 360,
-                            "overagePerGb": 15
+                        "60GB": {
+                            "capGB": 60,
+                            "price": 270
                         },
-                        "100gb": {
-                            "capgb": 100,
-                            "price": 450,
-                            "overagePerGb": 15
+                        "80GB": {
+                            "capGB": 80,
+                            "price": 360
+                        },
+                        "100GB": {
+                            "capGB": 100,
+                            "price": 450
                         }
                     }
                 }

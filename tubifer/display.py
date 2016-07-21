@@ -65,110 +65,138 @@ def defaulted(dataset, names):
             for name in names if name != DEFAULTS]
 
 
-def visit(provider_name, type_name, plan_name, option_name, state, city, usage_gb):
-    pass
+class Display:
+    provider_callback = Indenter()
+    type_callback = Indenter(provider_callback)
+    plan_callback = Indenter(type_callback)
+    option_callback = Indenter(plan_callback)
+
+    def visit_provider(self, name, value):  # pylint: disable=unused-argument
+        """Show a provider's details"""
+
+        print()
+        self.provider_callback('Provider: {}'.format(name))
+
+    def visit_type(self, name, type_):
+        """Show a type's details"""
+
+        child_indent = Indenter(self.type_callback)
+        grandchild_indent = Indenter(child_indent)
+
+        print()
+        self.type_callback('Type: {}'.format(name))
+
+        if type_['sources']:
+            child_indent('Sources:')
+            for name in natural_sorted(type_['sources']):
+                grandchild_indent('{}: {}'.format(name, type_['sources'][name]))
+
+    def visit_plan(self, name, plan):
+        """Show a plan's details"""
+
+        child_indent = Indenter(self.plan_callback)
+
+        print()
+        self.plan_callback('Plan: {}'.format(name))
+        child_indent('Description: {}'.format(plan['description']))
+
+    def visit_option(self, name, option, usage_gb):
+        """Show an option's details and its price / time calculations"""
+
+        child_indent = Indenter(self.option_callback)
+
+        print()
+        self.option_callback('Option: {}'.format(name))
+
+        price = option['price']
+        cap_gb = option.get('capGB')
+
+        child_indent('Base price: ${}/month'.format(price))
+        if usage_gb is not None:
+            if cap_gb is not None and usage_gb > cap_gb:
+                price += option['overagePerGB'] * (usage_gb - cap_gb)
+            child_indent('Extended price: ${}/month'.format(price))
+
+        if cap_gb is not None:
+            child_indent("Cap GB: {}".format(cap_gb))
+
+        max_mbps = option.get('maxMbps')
+        if max_mbps is not None:
+            child_indent("Max Mbps: {}".format(max_mbps))
+            if cap_gb is not None:
+                usage_hours = cap_gb * 1024 * 1024 * 1024 / (max_mbps * 1000 * 1000 / 8) / 3600
+                child_indent('Usage hours: {:.1f}'.format(usage_hours))
 
 
 def select(value, choices, description, callback=None):
+    """Return a list of the relevent values in choices"""
+
     if value is None:
         return natural_sorted(choices)
 
     if value not in choices:
         if callback:
-            callback('{} name {!r} must be one of {}'.format(
+            callback('Error: {} name {!r} must be one of {}'.format(
                 description, value, natural_sorted(choices)))
         return []
 
     return [value]
 
 
-def show_providers(parent, providers, provider_name=None, **kwargs):
-    """Show one or more providers"""
+def visit_providers(handler, providers, provider_name=None, **kwargs):
+    """Interate across all defined providers"""
 
-    indent = Indenter(parent)
-
-    names = select(provider_name, providers, 'Provider', indent)
+    names = select(provider_name, providers, 'Provider', handler.provider_callback)
 
     for key, value in defaulted(providers, names):
-        print()
-        indent('Provider: {}'.format(key))
-        show_provider(indent, value, **kwargs)
+        visit_provider(handler, key, value, **kwargs)
 
 
-def show_provider(parent, provider_data, state=None, city=None, type_name=None, **kwargs):
-    """Show a provider and one or more of its plan types"""
+def visit_provider(  # pylint: disable=too-many-arguments
+        handler, name, provider_data, state=None, city=None, type_name=None, **kwargs):
+    """Iterate across a provider's types"""
 
-    indent = Indenter(parent)
+    handler.visit_provider(name, provider_data)
 
     types = provider.get_geo_types(provider_data, state, city)
     if types is None:
-        indent('Unavailable in this location')
+        Indenter()('Unavailable in this location')
         return
 
-    names = select(type_name, types, 'Type', indent)
+    names = select(type_name, types, 'Type', handler.type_callback)
 
     for key, value in defaulted(types, names):
-        print()
-        indent('Type: {}'.format(key))
-        show_type(indent, value, **kwargs)
+        visit_type(handler, key, value, **kwargs)
 
 
-def show_type(parent, type_, plan_name=None, **kwargs):
-    """Show a plan type and one or more of its plans"""
+def visit_type(handler, name, type_, plan_name=None, **kwargs):
+    """Iterate across a type's plans"""
 
-    indent = Indenter(parent)
+    handler.visit_type(name, type_)
 
-    names = select(plan_name, type_['plans'], 'Plan', indent)
-
-    if names and type_['sources']:
-        indent('Sources:')
-        for name in natural_sorted(type_['sources']):
-            Indenter(indent)('{}: {}'.format(name, type_['sources'][name]))
+    names = select(plan_name, type_['plans'], 'Plan', handler.plan_callback)
+    if not names:
+        return
 
     for key, value in defaulted(type_['plans'], names):
-        print()
-        indent('Plan: {}'.format(key))
-        show_plan(indent, value, **kwargs)
+        visit_plan(handler, key, value, **kwargs)
 
 
-def show_plan(parent, plan, option_name=None, **kwargs):
-    """Show a plan and one or more of its options"""
+def visit_plan(handler, name, plan, option_name=None, **kwargs):
+    """Iterate across a plans options"""
 
-    indent = Indenter(parent)
+    handler.visit_plan(name, plan)
 
-    indent('Description: {}'.format(plan['description']))
-
-    names = select(option_name, plan['options'], 'Option', indent)
+    names = select(option_name, plan['options'], 'Option', handler.option_callback)
 
     for key, value in defaulted(plan['options'], names):
-        print()
-        indent('Option: {}'.format(key))
-        show_option(indent, value, **kwargs)
+        visit_option(handler, key, value, **kwargs)
 
 
-def show_option(parent, option, usage_gb=None):
-    """Show an option and its price / time calculations"""
+def visit_option(handler, name, option, usage_gb=None):
+    """Visit an option leaf node"""
 
-    indent = Indenter(parent)
-
-    price = option['price']
-    cap_gb = option.get('capGB')
-
-    indent('Base price: ${}/month'.format(price))
-    if usage_gb is not None:
-        if cap_gb is not None and usage_gb > cap_gb:
-            price += option['overagePerGB'] * (usage_gb - cap_gb)
-        indent('Extended price: ${}/month'.format(price))
-
-    if cap_gb is not None:
-        indent("Cap GB: {}".format(cap_gb))
-
-    max_mbps = option.get('maxMbps')
-    if max_mbps is not None:
-        indent("Max Mbps: {}".format(max_mbps))
-        if cap_gb is not None:
-            usage_hours = cap_gb * 1024 * 1024 * 1024 / (max_mbps * 1000 * 1000 / 8) / 3600
-            indent('Usage hours: {:.1f}'.format(usage_hours))
+    handler.visit_option(name, option, usage_gb)
 
 
 @click.command()
@@ -199,4 +227,4 @@ def show_data_prices(**kwargs):
         provider_data = provider.load(name)
         dataset[provider_data['name']] = provider_data
 
-    show_providers(None, dataset, **kwargs)
+    visit_providers(Display(), dataset, **kwargs)

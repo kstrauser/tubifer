@@ -48,9 +48,9 @@ def natural_sort_key(value):
     return [lower_str_or_int(c) for c in DIGITS.split(value)]
 
 
-def natural_sorted(*args, **kwargs):
+def natural_sorted(iterable, *args, **kwargs):
     """Like sorted, but naturally ordered"""
-    return sorted(*args, key=natural_sort_key, **kwargs)
+    return sorted([_ for _ in iterable if _ != DEFAULTS], *args, key=natural_sort_key, **kwargs)
 
 
 def defaulted(dataset, names):
@@ -65,17 +65,29 @@ def defaulted(dataset, names):
             for name in names if name != DEFAULTS]
 
 
+def visit(provider_name, type_name, plan_name, option_name, state, city, usage_gb):
+    pass
+
+
+def select(value, choices, description, callback=None):
+    if value is None:
+        return natural_sorted(choices)
+
+    if value not in choices:
+        if callback:
+            callback('{} name {!r} must be one of {}'.format(
+                description, value, natural_sorted(choices)))
+        return []
+
+    return [value]
+
+
 def show_providers(parent, providers, provider_name=None, **kwargs):
     """Show one or more providers"""
 
     indent = Indenter(parent)
 
-    names = natural_sorted(providers)
-    if provider_name is not None:
-        if provider_name not in providers:
-            indent('Provider name {!r} must be one of {}'.format(provider_name, names))
-            return
-        names = [provider_name]
+    names = select(provider_name, providers, 'Provider', indent)
 
     for key, value in defaulted(providers, names):
         print()
@@ -93,12 +105,7 @@ def show_provider(parent, provider_data, state=None, city=None, type_name=None, 
         indent('Unavailable in this location')
         return
 
-    names = natural_sorted(types)
-    if type_name is not None:
-        if type_name not in names:
-            indent('Type name {!r} must be one of {}'.format(type_name, names))
-            return
-        names = [type_name]
+    names = select(type_name, types, 'Type', indent)
 
     for key, value in defaulted(types, names):
         print()
@@ -111,14 +118,9 @@ def show_type(parent, type_, plan_name=None, **kwargs):
 
     indent = Indenter(parent)
 
-    names = natural_sorted(type_['plans'])
-    if plan_name is not None:
-        if plan_name not in names:
-            indent('Plan name {!r} must be one of {}'.format(plan_name, names))
-            return
-        names = [plan_name]
+    names = select(plan_name, type_['plans'], 'Plan', indent)
 
-    if type_['sources']:
+    if names and type_['sources']:
         indent('Sources:')
         for name in natural_sorted(type_['sources']):
             Indenter(indent)('{}: {}'.format(name, type_['sources'][name]))
@@ -136,12 +138,7 @@ def show_plan(parent, plan, option_name=None, **kwargs):
 
     indent('Description: {}'.format(plan['description']))
 
-    names = natural_sorted(plan['options'])
-    if option_name is not None:
-        if option_name not in names:
-            indent('Option name {!r} must be one of {}'.format(option_name, names))
-            return
-        names = [option_name]
+    names = select(option_name, plan['options'], 'Option', indent)
 
     for key, value in defaulted(plan['options'], names):
         print()

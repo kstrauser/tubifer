@@ -1,56 +1,10 @@
 """Calculate and display ISP data plan prices"""
 
-import re
-
 import click
 
 from . import provider
-
-DEFAULTS = '_defaults'
-DIGITS = re.compile(r'([0-9]+)')
-
-
-class Indenter:  # pylint: disable=too-few-public-methods
-    """Indented printer.
-
-    By default, prints unindented. If initialized with another
-    Indented instance, prints one level more indented than its parent.
-
-    >>> i = Indenter()
-    >>> i('foo')
-    foo
-    >>> j = Indenter(i)
-    >>> j('bar')
-      bar
-    """
-
-    def __init__(self, parent=None):
-        if parent is None:
-            self.level = 0
-        else:
-            self.level = parent.level + 1
-
-    def __call__(self, *args, **kwargs):
-        if self.level:
-            print(' ' + '  ' * (self.level - 1), *args, **kwargs)
-        else:
-            print(*args, **kwargs)
-
-
-def lower_str_or_int(value):
-    """Return the value as an int if possible, otherwise as a string"""
-    return int(value) if value.isdigit() else value.lower()
-
-
-def natural_sort_key(value):
-    """Convet a value into a tuple suitable for natural ordering"""
-    # http://stackoverflow.com/questions/11150239/python-natural-sorting
-    return [lower_str_or_int(c) for c in DIGITS.split(value)]
-
-
-def natural_sorted(iterable, *args, **kwargs):
-    """Like sorted, but naturally ordered"""
-    return sorted([_ for _ in iterable if _ != DEFAULTS], *args, key=natural_sort_key, **kwargs)
+from .common import DEFAULTS, natural_sorted
+from .handlers import Display
 
 
 def defaulted(dataset, names):
@@ -63,69 +17,6 @@ def defaulted(dataset, names):
 
     return [(name, provider.overlay(defaults, dataset[name]))
             for name in names if name != DEFAULTS]
-
-
-class Display:
-    provider_callback = Indenter()
-    type_callback = Indenter(provider_callback)
-    plan_callback = Indenter(type_callback)
-    option_callback = Indenter(plan_callback)
-
-    def visit_provider(self, name, value):  # pylint: disable=unused-argument
-        """Show a provider's details"""
-
-        print()
-        self.provider_callback('Provider: {}'.format(name))
-
-    def visit_type(self, name, type_):
-        """Show a type's details"""
-
-        child_indent = Indenter(self.type_callback)
-        grandchild_indent = Indenter(child_indent)
-
-        print()
-        self.type_callback('Type: {}'.format(name))
-
-        if type_['sources']:
-            child_indent('Sources:')
-            for name in natural_sorted(type_['sources']):
-                grandchild_indent('{}: {}'.format(name, type_['sources'][name]))
-
-    def visit_plan(self, name, plan):
-        """Show a plan's details"""
-
-        child_indent = Indenter(self.plan_callback)
-
-        print()
-        self.plan_callback('Plan: {}'.format(name))
-        child_indent('Description: {}'.format(plan['description']))
-
-    def visit_option(self, name, option, usage_gb):
-        """Show an option's details and its price / time calculations"""
-
-        child_indent = Indenter(self.option_callback)
-
-        print()
-        self.option_callback('Option: {}'.format(name))
-
-        price = option['price']
-        cap_gb = option.get('capGB')
-
-        child_indent('Base price: ${}/month'.format(price))
-        if usage_gb is not None:
-            if cap_gb is not None and usage_gb > cap_gb:
-                price += option['overagePerGB'] * (usage_gb - cap_gb)
-            child_indent('Extended price: ${}/month'.format(price))
-
-        if cap_gb is not None:
-            child_indent("Cap GB: {}".format(cap_gb))
-
-        max_mbps = option.get('maxMbps')
-        if max_mbps is not None:
-            child_indent("Max Mbps: {}".format(max_mbps))
-            if cap_gb is not None:
-                usage_hours = cap_gb * 1024 * 1024 * 1024 / (max_mbps * 1000 * 1000 / 8) / 3600
-                child_indent('Usage hours: {:.1f}'.format(usage_hours))
 
 
 def select(value, choices, description, callback=None):
@@ -160,7 +51,7 @@ def visit_provider(  # pylint: disable=too-many-arguments
 
     types = provider.get_geo_types(provider_data, state, city)
     if types is None:
-        Indenter()('Unavailable in this location')
+        handler.type_callback('Unavailable in this location')
         return
 
     names = select(type_name, types, 'Type', handler.type_callback)

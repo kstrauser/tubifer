@@ -13,7 +13,7 @@ setup(
     },
     entry_points={
         'console_scripts': {
-            'show-data-prices = tubifer.display:show_data_prices',
+            'show-data-prices = tubifer.evaluate:show_data_prices',
         }
     },
     test_suite='tests',
